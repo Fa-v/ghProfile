@@ -1,0 +1,37 @@
+* {
+  box-sizing: border-box;
+}
+
+*::before {
+  box-sizing: inherit;
+}
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  font-size: 1em;
+  font-family: Helvetica, sans-serif;
+  line-height: 1.5;
+  background-image: url('./pattern.jpg');
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2em;
+  color: orange;
+}
+
+.container {
+  padding: 2em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
