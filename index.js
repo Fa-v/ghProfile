@@ -12,7 +12,8 @@
   let user;
 
   /**
-   * Fetches user's public profile from GitHub 'users' api
+   * Fetches user's public profile from GitHub 'users' api. If, there is not a
+   * valid email address in data, look for it in the repositories
    * @param {String} url
    * @returns {Void}
    * @this Window
@@ -26,17 +27,25 @@
           throw new Error('Error fetching user data');
         }
       })
-      .then(data => profile.renderProfile(data))
+      .then(data => {
+        if (profile.validateEmail(data)) {
+          return profile.renderProfile(data);
+        }
+
+        const url = profile.composeReposUrl(data.login);
+        profile.fetchRepos(url, data);
+      })
       .catch(error => console.log(error));
   };
 
   /**
-   * Fetches public repositories a specific user in from GitHub api
+   * Fetches for a valid email address in user's public repositories and commits
+   * from GitHub api
    * @param {String} url
    * @returns {Void}
    * @this Window
    */
-  profile.fetchRepos = url => {
+  profile.fetchRepos = (url, initialUserData) => {
     fetch(url)
       .then(response => {
         if (response.ok) {
@@ -45,7 +54,12 @@
           throw new Error('Error fetching user data');
         }
       })
-      .then(data => profile.searchForCommitsUrl(data))
+      .then(data => {
+        const commitsUrl = profile.searchForCommitsUrl(data);
+        return profile.fetchCommits(commitsUrl);
+      })
+      .then(data => profile.searchForEmail(data))
+      .then(email => profile.renderProfile({ ...initialUserData, email }))
       .catch(error => console.log(error));
   };
 
@@ -56,7 +70,7 @@
    * @this Window
    */
   profile.fetchCommits = url => {
-    fetch(url)
+    return fetch(url)
       .then(response => {
         if (response.ok) {
           return response.json();
@@ -64,7 +78,6 @@
           throw new Error('Error fetching user data');
         }
       })
-      .then(data => profile.searchForEmail(data))
       .catch(error => console.log(error));
   };
 
@@ -87,8 +100,7 @@
    */
   profile.composeReposUrl = user => {
     const composedUrl = `${baseUrl}${user}/repos?client_id=${clientID}&client_secret=${secret}`;
-    console.log('composedUrl', composedUrl);
-    profile.fetchRepos(composedUrl);
+    return composedUrl;
   };
 
   /**
@@ -117,8 +129,8 @@
       let url = repo.commits_url;
       return (url = url.slice(0, -6));
     });
-    console.log('commitUrl[0]', commitUrl[0]);
-    profile.fetchCommits(commitUrl[0]);
+
+    return commitUrl[0];
   };
 
   /**
@@ -128,15 +140,19 @@
    * @this Window
    */
   profile.searchForEmail = data => {
-    const emailNode = document.getElementById('email');
-    let email;
-    data.map(item => {
-      email = item.commit.author.email;
-      console.log(email);
-      return email;
+    let validEmails = data.filter(item => {
+      return profile.validateEmail(item.commit.author);
     });
-    let text = `Email: ${email}`;
-    emailNode.innerText = text;
+    const getEmail = list => list[0].commit.author.email;
+
+    return validEmails.length ? getEmail(validEmails) : '';
+  };
+
+  profile.validateEmail = data => {
+    let ex = /([^0-9]\+|[[a-z]+)([a-z\d!#$%&'*+\-\/=?^_`{|}~\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+(\.[a-z\d!#$%&'*+\-\/=?^_`{|}~\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+)*|"((([ \t]*\r\n)?[ \t]+)?([\x01-\x08\x0b\x0c\x0e-\x1f\x7f\x21\x23-\x5b\x5d-\x7e\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]|\\[\x01-\x09\x0b\x0c\x0d-\x7f\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))*(([ \t]*\r\n)?[ \t]+)?")@[^users][^noreply][a-z]*[\.]*([com]*|[edu]|[org])?/i;
+    const isValid = ex.test(data.email) && data.email !== null;
+
+    return isValid;
   };
 
   /**
@@ -148,9 +164,6 @@
   profile.renderProfile = data => {
     const card = document.querySelector('.card');
     card.innerHTML = '';
-    if (data.email === null) {
-      profile.composeReposUrl(data.login);
-    }
 
     let template = `
       <h4>Name: ${data.name}</h4>
