@@ -6,6 +6,9 @@
   const searchBox = document.forms['searchBar'];
   const searchInput = document.getElementById('submit-input');
   const container = document.querySelector('.container');
+  const baseUrl = 'https://api.github.com/users/';
+  const clientID = '';
+  const secret = '';
   let user;
 
   /**
@@ -68,15 +71,24 @@
   /**
    * Sets parameters in the Url
    * @param {String} user the GitHub user introduced by the user
-   * @returns {String} the final url
+   * @returns {String} the final url to fetch a user
    * @this Window
    */
-  profile.composeUrl = user => {
-    const clientID = '';
-    const secret = '';
-    const baseUrl = 'https://api.github.com/users/';
+  profile.composeUserUrl = user => {
     const composedUrl = `${baseUrl}${user}?client_id=${clientID}&client_secret=${secret}`;
     return composedUrl;
+  };
+
+  /**
+   * Sets parameters in the Url
+   * @param {String} user the GitHub user introduced by the user
+   * @returns {String} the final url to fetch a user's repositories
+   * @this Window
+   */
+  profile.composeReposUrl = user => {
+    const composedUrl = `${baseUrl}${user}/repos?client_id=${clientID}&client_secret=${secret}`;
+    console.log('composedUrl', composedUrl);
+    profile.fetchRepos(composedUrl);
   };
 
   /**
@@ -89,19 +101,32 @@
     searchBox.addEventListener('submit', event => {
       event.preventDefault();
       user = searchInput.value;
-      let url = profile.composeUrl(user);
+      let url = profile.composeUserUrl(user);
       profile.getUserData(url);
     });
   };
 
+  /**
+   * Search in the data for the commits url
+   * @param {Object} data user's repositories
+   * @returns {String} url for the commits in user's repositories
+   * @this Window
+   */
   profile.searchForCommitsUrl = data => {
     let commitUrl = data.map(repo => {
       let url = repo.commits_url;
       return (url = url.slice(0, -6));
     });
+    console.log('commitUrl[0]', commitUrl[0]);
     profile.fetchCommits(commitUrl[0]);
   };
 
+  /**
+   * Search in the email in the user's commits and shows it in the DOM
+   * @param {Object} data user's commits
+   * @returns {String} email user's email
+   * @this Window
+   */
   profile.searchForEmail = data => {
     const emailNode = document.getElementById('email');
     let email;
@@ -124,11 +149,7 @@
     const card = document.querySelector('.card');
     card.innerHTML = '';
     if (data.email === null) {
-      const clientID = '';
-      const secret = '';
-      const baseUrl = 'https://api.github.com/users/';
-      const composedUrl = `${baseUrl}${user}/repos?client_id=${clientID}&client_secret=${secret}`;
-      profile.fetchRepos(composedUrl);
+      profile.composeReposUrl(data.login);
     }
 
     let template = `
