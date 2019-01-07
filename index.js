@@ -6,6 +6,7 @@
   const searchBox = document.forms['searchBar'];
   const searchInput = document.getElementById('submit-input');
   const container = document.querySelector('.container');
+  const card = document.querySelector('.card');
   const baseUrl = 'https://api.github.com/users/';
   const clientID = '';
   const secret = '';
@@ -19,6 +20,7 @@
    * @this Window
    */
   profile.getUserData = url => {
+    profile.showLoader();
     fetch(url)
       .then(response => {
         if (response.ok) {
@@ -162,7 +164,6 @@
    * @this Window
    */
   profile.renderProfile = data => {
-    const card = document.querySelector('.card');
     card.innerHTML = '';
 
     let template = `
@@ -176,6 +177,29 @@
     `;
     card.insertAdjacentHTML('beforeend', template);
     container.append(card);
+  };
+
+  /**
+   * Shows animation while fetching data
+   * @returns {Void}
+   */
+  profile.showLoader = () => {
+    card.innerHTML = '';
+    const loader = `<div id="pageLoader" class="lds-ellipsis">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>`;
+    card.insertAdjacentHTML('beforeend', loader);
+  };
+
+  /**
+   * Hides animation when we have the data to show
+   * @returns {Void}
+   */
+  profile.hideSpinner = () => {
+    spinner.removeAttribute('class');
   };
 
   /**
