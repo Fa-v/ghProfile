@@ -37,7 +37,7 @@
         const url = profile.composeReposUrl(data.login);
         profile.fetchRepos(url, data);
       })
-      .catch(error => console.log(error));
+      .catch(error => profile.handleError(error));
   };
 
   /**
@@ -62,7 +62,7 @@
       })
       .then(data => profile.searchForEmail(data))
       .then(email => profile.renderProfile({ ...initialUserData, email }))
-      .catch(error => console.log(error));
+      .catch(error => profile.handleError(error));
   };
 
   /**
@@ -80,7 +80,17 @@
           throw new Error('Error fetching user data');
         }
       })
-      .catch(error => console.log(error));
+      .catch(error => profile.handleError(error));
+  };
+
+  profile.handleError = error => {
+    card.innerHTML = '';
+    const errorTemplate = `<div>
+        <h3>There has been an error</h3>
+        <h5>${error}</h5>
+      </div>`;
+    console.log(error);
+    card.insertAdjacentHTML('afterbegin', errorTemplate);
   };
 
   /**
@@ -169,8 +179,8 @@
     let template = `
       <h4>Name: ${data.name}</h4>
       <p>GitHub user: ${data.login}</p>
-      <p id="email">Email: ${data.email}</p>
-      <p>Bio: ${data.bio}</p>
+      <p id="email">Email: ${data.email ? data.email : '😱 no email 🤪'}</p>
+      <p>Bio: ${data.bio ? data.bio : '💩 💩 💩 '}</p>
       <p>Repos: ${data.public_repos}</p>
       <p>Followers: ${data.followers}</p>
       <p>Following: ${data.following}</p>
