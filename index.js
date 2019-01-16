@@ -177,6 +177,7 @@
     card.innerHTML = '';
 
     let template = `
+      <img class="avatar" src="${data.avatar_url}" alt="Profile picture"/>
       <h4>Name: ${data.name}</h4>
       <p>GitHub user: ${data.login}</p>
       <p id="email">Email: ${data.email ? data.email : '😱 no email 🤪'}</p>
